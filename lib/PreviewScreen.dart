@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class PreviewScreen extends StatefulWidget {
   final String pdfFilePath; // Pass the PDF file path from the previous screen
@@ -11,6 +12,8 @@ class PreviewScreen extends StatefulWidget {
 
 class _PreviewScreenState extends State<PreviewScreen> {
   bool _isMusicGenerated = false;
+  String _audioFilePath =
+      'path_to_your_audio_file.mp3'; // Replace with your audio file path
   // Add more variables as needed for your music generation and playback
 
   @override
@@ -30,7 +33,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
             ),
             SizedBox(height: 20),
             _isMusicGenerated
-                ? AudioPlayerWidget() // Add your audio player widget here
+                ? AudioPlayerWidget(
+                    audioFilePath: _audioFilePath) // Add audio player widget
                 : Text('Music has not been generated yet.'),
             SizedBox(height: 20),
             // Add sliders for adjustment controls if needed
@@ -48,13 +52,58 @@ class _PreviewScreenState extends State<PreviewScreen> {
   }
 }
 
-class AudioPlayerWidget extends StatelessWidget {
+class AudioPlayerWidget extends StatefulWidget {
+  final String audioFilePath; // Path to the audio file you want to play
+
+  AudioPlayerWidget({required this.audioFilePath});
+
+  @override
+  _AudioPlayerWidgetState createState() => _AudioPlayerWidgetState();
+}
+
+class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
+  late AudioPlayer _audioPlayer;
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.onPlayerStateChanged.listen((PlayerState event) {
+      if (event == PlayerState.completed || event == PlayerState.stopped) {
+        setState(() {
+          _isPlaying = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  void _playPause() async {
+    if (_isPlaying) {
+      await _audioPlayer.pause();
+    } else {
+      await _audioPlayer.resume();
+    }
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Implement your audio player widget here
-    // You can use a third-party package like audioplayers for audio playback
-    return Container(
-        // Your audio player UI goes here
-        );
+    return Column(
+      children: <Widget>[
+        ElevatedButton(
+          onPressed: _playPause,
+          child: Text(_isPlaying ? 'Pause' : 'Play'),
+        ),
+      ],
+    );
   }
 }
